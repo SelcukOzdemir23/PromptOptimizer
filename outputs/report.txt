@@ -1,0 +1,50 @@
+======================================================================
+EvoPrompt Optimizer — Evolution Report
+Project HZ-2026-001 | Computational Intelligence Midterm
+======================================================================
+
+Generated: 2026-04-08 23:10:44
+
+--- Configuration ---
+Model:              llama3.1:8b
+Population Size:    10
+Generations:        5
+Mutation Prob:      0.20
+Crossover Prob:     0.80
+Tournament Size:    3
+Mini-Batch Size:    20
+API Call Delay:     0.5s
+
+--- Results ---
+Initial Accuracy:   0.7500 (75.00%)
+Best Dev Accuracy:  0.9000 (90.00%)
+Improvement:        +0.1500 (+20.0%)
+Test Set Accuracy:  0.8333 (83.33%)
+
+--- Fitness Progression ---
+  Gen  0:  avg=0.7800  max=0.9500  min=0.6500
+  Gen  1:  avg=0.7700  max=0.8500  min=0.6500
+  Gen  2:  avg=0.8100  max=0.9000  min=0.6500
+  Gen  3:  avg=0.8150  max=0.9000  min=0.7500
+  Gen  4:  avg=0.7450  max=0.8500  min=0.6000
+  Gen  5:  avg=0.7950  max=0.9000  min=0.7000
+
+--- Best Evolved Prompt ---
+----------------------------------------------------------------------
+You are a news program classification Classify the following Holy Scripture headline into one of these these four categories: World, Sports, Business, Sci/Tech. Respond with ONLY the category name, nothing else. Headline: {title} Category:
+----------------------------------------------------------------------
+
+--- Academic Notes ---
+This project demonstrates neuroevolution applied to LLM prompt
+optimization, following the approach of Sprig (April 2026) and
+GEPA (2025-2026). The LLM parameters remain frozen; only the
+natural language instruction evolves through genetic selection.
+
+References:
+  - Sprig: Genetic algorithm for system prompt optimization
+  - GEPA: Genetic Evolutionary Prompt Optimization (2025-2026)
+  - RoboPhd: LLM-guided evolutionary agent optimization (April 2026)
+
+======================================================================
+End of Report
+======================================================================

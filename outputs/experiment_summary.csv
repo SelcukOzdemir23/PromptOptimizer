@@ -1,0 +1,23 @@
+metric,value
+timestamp,2026-04-08 23:10:44
+model,llama3.1:8b
+population_size,10
+generations,5
+mutation_probability,0.2
+crossover_probability,0.8
+tournament_size,3
+mini_batch_size,20
+api_call_delay,0.5
+initial_accuracy,0.750000
+best_dev_accuracy,0.900000
+test_accuracy,0.833333
+improvement_absolute,0.150000
+improvement_percentage,20.00%
+avg_accuracy_overall,0.785833
+max_accuracy_overall,0.950000
+min_accuracy_overall,0.600000
+final_generation_avg,0.795000
+final_generation_max,0.900000
+convergence_generation,3
+total_api_calls_estimate,1020
+best_prompt,"You are a news program classification Classify the following Holy Scripture headline into one of these these four categories: World, Sports, Business, Sci/Tech. Respond with ONLY the category name, nothing else. Headline: {title} Category:"
