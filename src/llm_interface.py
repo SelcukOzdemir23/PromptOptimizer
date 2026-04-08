@@ -29,13 +29,16 @@ def _get_client() -> Groq:
     """
     Create and return a Groq API client.
 
+    max_retries=0: We handle retries manually in classify_text()
+    to avoid double-retry storms with Groq's built-in retry.
+
     The client reads GROQ_API_KEY from environment variables
     (automatically loaded by python-dotenv from .env file).
 
     Returns:
         Groq: Configured Groq API client instance.
     """
-    return Groq(api_key=config.GROQ_API_KEY)
+    return Groq(api_key=config.GROQ_API_KEY, max_retries=0)
 
 
 # ─── Response Parsing ─────────────────────────────────────────────────────────
