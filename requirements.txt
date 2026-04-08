@@ -1,8 +1,8 @@
 # EvoPrompt Optimizer - Dependencies
 # Computational Intelligence Midterm Project - HZ-2026-001
 
-# Google Gemini API
-google-generativeai>=0.8.0
+# Google Gemini API (new SDK - google-genai, NOT deprecated google-generativeai)
+google-genai>=1.0.0
 
 # Evolutionary Algorithms
 deap>=1.4.1

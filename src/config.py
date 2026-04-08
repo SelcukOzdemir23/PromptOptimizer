@@ -43,8 +43,11 @@ RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
 
 # ─── LLM / Gemini Configuration ──────────────────────────────────────────────
 
+# NOTE: Uses the new Google GenAI SDK (google-genai >= 1.0.0)
+# The old google-generativeai SDK is deprecated since late 2024.
+# API key is read automatically from GEMINI_API_KEY environment variable.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
 # Rate limiting & retry
 API_CALL_DELAY = float(os.getenv("API_CALL_DELAY", "4.0"))
