@@ -98,10 +98,23 @@ def main() -> None:
 
     # ── Step 4: Evaluate on Final Test Set ───────────────────────────────
     logger.info("Step 4: Evaluating best prompt on held-out test set...")
+
+    # Sample from test set to limit API calls (unless TEST_SAMPLE_SIZE=-1)
+    if config.TEST_SAMPLE_SIZE > 0 and config.TEST_SAMPLE_SIZE < len(test_titles):
+        import random
+        rng = random.Random(config.RANDOM_SEED)
+        indices = rng.sample(range(len(test_titles)), config.TEST_SAMPLE_SIZE)
+        eval_titles = [test_titles[i] for i in indices]
+        eval_labels = [test_labels[i] for i in indices]
+        logger.info(f"   Using {len(eval_titles)}/{len(test_titles)} test samples")
+    else:
+        eval_titles = test_titles
+        eval_labels = test_labels
+
     test_accuracy = llm_interface.evaluate_prompt(
         prompt=best_prompt,
-        titles=test_titles,
-        labels=test_labels,
+        titles=eval_titles,
+        labels=eval_labels,
     )
     logger.info(f"Test set accuracy: {test_accuracy:.4f} ({test_accuracy:.2%})")
     print()

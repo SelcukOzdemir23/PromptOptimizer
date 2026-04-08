@@ -41,6 +41,10 @@ TEST_CSV_PATH = BASE_DIR / "dataset" / "test.csv"
 TEST_SPLIT_RATIO = float(os.getenv("TEST_SPLIT_RATIO", "0.5"))
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
 
+# Test evaluation sample size (limits API calls for final evaluation)
+# Set to -1 to use the full test set (expensive!)
+TEST_SAMPLE_SIZE = int(os.getenv("TEST_SAMPLE_SIZE", "50"))
+
 # ─── LLM / Gemini Configuration ──────────────────────────────────────────────
 
 # NOTE: Uses the new Google GenAI SDK (google-genai >= 1.0.0)
