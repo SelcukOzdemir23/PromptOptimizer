@@ -1,0 +1,18 @@
+# EvoPrompt Optimizer - Dependencies
+# Computational Intelligence Midterm Project - HZ-2026-001
+
+# Google Gemini API
+google-generativeai>=0.8.0
+
+# Evolutionary Algorithms
+deap>=1.4.1
+
+# Natural Language Processing
+nltk>=3.9.1
+
+# Data Processing & Visualization
+pandas>=2.2.0
+matplotlib>=3.9.0
+
+# Environment & Configuration
+python-dotenv>=1.0.1
