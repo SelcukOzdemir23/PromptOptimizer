@@ -17,3 +17,6 @@ matplotlib>=3.9.0
 
 # Environment & Configuration
 python-dotenv>=1.0.1
+
+# Testing
+pytest>=8.0.0
