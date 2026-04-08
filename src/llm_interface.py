@@ -114,17 +114,21 @@ def classify_text(prompt: str, title: str) -> str | None:
             )
 
             response_text = chat_completion.choices[0].message.content
+            if response_text is None:
+                logger.warning("Got empty response from LLM")
+                return None
             return _parse_response(response_text)
 
         except APIError as e:
             last_error = e
             logger.error(f"API error on attempt {attempt}: {e}")
+            status_code = getattr(e, 'status_code', None)
 
             # Rate limit errors (429) — wait longer and retry
-            if hasattr(e, 'status_code') and e.status_code == 429:
+            if status_code == 429:
                 continue
             # Server errors — retry
-            if hasattr(e, 'status_code') and 500 <= e.status_code < 600:
+            if status_code and 500 <= status_code < 600:
                 continue
             # Other errors — fail immediately
             break

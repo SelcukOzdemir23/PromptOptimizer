@@ -76,15 +76,17 @@ def check_model_availability() -> bool:
             model=config.GROQ_MODEL,
             max_tokens=5,
         )
-        text = response.choices[0].message.content
+        message = response.choices[0].message
+        text = message.content if message.content else "(empty)"
         print(f"✅ PASS: {config.GROQ_MODEL} responded: '{text[:50]}'")
         return True
 
     except APIError as e:
         print(f"❌ FAIL: API error: {e}")
-        if hasattr(e, 'status_code') and e.status_code == 401:
+        status_code = getattr(e, 'status_code', None)  # type: ignore[arg-type]
+        if status_code == 401:
             print("   → Invalid API key. Check your GROQ_API_KEY.")
-        elif hasattr(e, 'status_code') and e.status_code == 429:
+        elif status_code == 429:
             print("   → Rate limit exceeded. Wait and try again.")
         return False
     except Exception as e:
@@ -112,14 +114,16 @@ def check_text_generation() -> bool:
         )
         elapsed = time.time() - start
 
-        text = response.choices[0].message.content.strip()
+        message = response.choices[0].message
+        text = message.content.strip() if message.content else "(empty)"
         print(f"✅ PASS: Response received in {elapsed:.2f}s")
         print(f"   Response: '{text[:100]}'")
         return True
 
     except APIError as e:
+        status_code = getattr(e, 'status_code', None)  # type: ignore[arg-type]
         print(f"❌ FAIL: API error: {e}")
-        if hasattr(e, 'status_code') and e.status_code == 429:
+        if status_code == 429:
             print("   → Rate limit exceeded.")
         return False
     except Exception as e:

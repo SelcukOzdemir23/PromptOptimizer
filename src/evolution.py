@@ -41,12 +41,12 @@ except LookupError:
 # Register fitness and individual types globally
 # FitnessWeights: positive = maximization (accuracy)
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", str, fitness=creator.FitnessMax)
+creator.create("Individual", str, fitness=creator.FitnessMax)  # type: ignore[reportAttributeAccessIssue]
 
 
 # ─── Individual Creation ──────────────────────────────────────────────────────
 
-def _str_to_individual(prompt_str: str) -> creator.Individual:
+def _str_to_individual(prompt_str: str) -> creator.Individual:  # type: ignore[reportAttributeAccessIssue]
     """
     Convert a prompt string to a DEAP Individual.
 
@@ -78,7 +78,7 @@ def _get_synonym(word: str) -> str | None:
     """
     synonyms = []
     for syn in wordnet.synsets(word):
-        for lemma in syn.lemmas():
+        for lemma in syn.lemmas():  # type: ignore[reportOptionalMemberAccess]
             syn_word = lemma.name().replace("_", " ")
             if syn_word.lower() != word.lower():
                 synonyms.append(syn_word)

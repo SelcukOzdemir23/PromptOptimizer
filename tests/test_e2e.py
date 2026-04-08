@@ -164,25 +164,25 @@ class TestEvolution:
 
     def test_mutate_preserves_placeholder(self):
         """Mutation does not corrupt the {title} placeholder."""
-        from deap import base, creator
-        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-        creator.create("Individual", str, fitness=creator.FitnessMax)
+        from deap import base, creator  # type: ignore[reportAttributeAccessIssue]
+        creator.create("FitnessMax", base.Fitness, weights=(1.0,))  # type: ignore[reportAttributeAccessIssue]
+        creator.create("Individual", str, fitness=creator.FitnessMax)  # type: ignore[reportAttributeAccessIssue]
 
         import evolution
-        ind = creator.Individual("Classify this: {title} into categories")
+        ind = creator.Individual("Classify this: {title} into categories")  # type: ignore[reportAttributeAccessIssue]
         mutated = evolution._mutate_prompt(ind, indpb=1.0)
 
         assert "{title}" in str(mutated[0])
 
     def test_crossover_produces_valid_strings(self):
         """Crossover produces valid string individuals."""
-        from deap import base, creator
-        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-        creator.create("Individual", str, fitness=creator.FitnessMax)
+        from deap import base, creator  # type: ignore[reportAttributeAccessIssue]
+        creator.create("FitnessMax", base.Fitness, weights=(1.0,))  # type: ignore[reportAttributeAccessIssue]
+        creator.create("Individual", str, fitness=creator.FitnessMax)  # type: ignore[reportAttributeAccessIssue]
 
         import evolution
-        ind1 = creator.Individual("Classify the news headline into categories")
-        ind2 = creator.Individual("You are an expert, determine the topic for: {title}")
+        ind1 = creator.Individual("Classify the news headline into categories")  # type: ignore[reportAttributeAccessIssue]
+        ind2 = creator.Individual("You are an expert, determine the topic for: {title}")  # type: ignore[reportAttributeAccessIssue]
 
         child1, child2 = evolution._cx_prompt(ind1, ind2, indpb=1.0)
 
