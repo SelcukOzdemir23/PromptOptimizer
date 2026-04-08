@@ -245,3 +245,188 @@ def generate_report(
 
     logger.info(f"[VIZ] Report saved to {output_path}")
     return output_path
+
+
+# ─── Statistical CSV Exports ─────────────────────────────────────────────────
+
+def save_generation_stats_csv(
+    history: dict,
+    output_path: Path | None = None,
+) -> Path:
+    """
+    Save per-generation fitness statistics as a CSV file.
+
+    Columns: generation, avg_fitness, max_fitness, min_fitness,
+             improvement_from_initial, avg_change, max_change
+
+    Args:
+        history: Per-generation stats from the evolution loop.
+        output_path: Destination file path. Defaults to outputs/generation_stats.csv.
+
+    Returns:
+        Path: Path to the saved CSV file.
+    """
+    if output_path is None:
+        output_path = config.OUTPUTS_DIR / "generation_stats.csv"
+
+    config.OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    import csv
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "generation",
+            "avg_fitness",
+            "max_fitness",
+            "min_fitness",
+            "avg_fitness_pct",
+            "max_fitness_pct",
+            "min_fitness_pct",
+            "fitness_spread",
+        ])
+
+        for i in range(len(history["avg_fitness"])):
+            avg = history["avg_fitness"][i]
+            mx = history["max_fitness"][i]
+            mn = history["min_fitness"][i]
+            writer.writerow([
+                i,
+                f"{avg:.6f}",
+                f"{mx:.6f}",
+                f"{mn:.6f}",
+                f"{avg:.2%}",
+                f"{mx:.2%}",
+                f"{mn:.2%}",
+                f"{mx - mn:.6f}",
+            ])
+
+    logger.info(f"[VIZ] Generation stats CSV saved to {output_path}")
+    return output_path
+
+
+def save_experiment_summary_csv(
+    history: dict,
+    best_prompt: str,
+    best_fitness: float,
+    initial_fitness: float,
+    test_accuracy: float,
+    output_path: Path | None = None,
+) -> Path:
+    """
+    Save a single-row CSV experiment summary with all key metrics.
+
+    Useful for comparing multiple runs or appending to a larger dataset.
+
+    Args:
+        history: Per-generation stats.
+        best_prompt: Best evolved prompt.
+        best_fitness: Best fitness on dev pool.
+        initial_fitness: Initial human prompt fitness.
+        test_accuracy: Accuracy on held-out test set.
+        output_path: Destination file path. Defaults to outputs/experiment_summary.csv.
+
+    Returns:
+        Path: Path to the saved CSV file.
+    """
+    if output_path is None:
+        output_path = config.OUTPUTS_DIR / "experiment_summary.csv"
+
+    config.OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    import csv
+
+    avg_overall = sum(history["avg_fitness"]) / len(history["avg_fitness"])
+    max_overall = max(history["max_fitness"])
+    min_overall = min(history["min_fitness"])
+    improvement = best_fitness - initial_fitness
+    convergence_gen = None
+    for i in range(len(history["max_fitness"])):
+        # Convergence: when max stops improving for 2+ generations
+        if i >= 2:
+            if history["max_fitness"][i] == history["max_fitness"][i - 1]:
+                convergence_gen = i
+                break
+
+    rows = [
+        ["metric", "value"],
+        ["timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+        ["model", config.GEMINI_MODEL],
+        ["population_size", config.POPULATION_SIZE],
+        ["generations", config.GENERATIONS],
+        ["mutation_probability", config.MUTATION_PROBABILITY],
+        ["crossover_probability", config.CROSSOVER_PROBABILITY],
+        ["tournament_size", config.TOURNAMENT_SIZE],
+        ["mini_batch_size", config.MINI_BATCH_SIZE],
+        ["api_call_delay", config.API_CALL_DELAY],
+        ["initial_accuracy", f"{initial_fitness:.6f}"],
+        ["best_dev_accuracy", f"{best_fitness:.6f}"],
+        ["test_accuracy", f"{test_accuracy:.6f}"],
+        ["improvement_absolute", f"{improvement:.6f}"],
+        ["improvement_percentage", f"{(improvement / initial_fitness * 100) if initial_fitness > 0 else 0:.2f}%"],
+        ["avg_accuracy_overall", f"{avg_overall:.6f}"],
+        ["max_accuracy_overall", f"{max_overall:.6f}"],
+        ["min_accuracy_overall", f"{min_overall:.6f}"],
+        ["final_generation_avg", f"{history['avg_fitness'][-1]:.6f}"],
+        ["final_generation_max", f"{history['max_fitness'][-1]:.6f}"],
+        ["convergence_generation", convergence_gen if convergence_gen is not None else "N/A"],
+        ["total_api_calls_estimate", config.POPULATION_SIZE * config.GENERATIONS * config.MINI_BATCH_SIZE + config.MINI_BATCH_SIZE + len(history.get("test_titles", []))],
+        ["best_prompt", best_prompt.replace("\n", " ")],
+    ]
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerows(rows)
+
+    logger.info(f"[VIZ] Experiment summary CSV saved to {output_path}")
+    return output_path
+
+
+def save_population_analysis_csv(
+    population: list,
+    generation: int,
+    output_path: Path | None = None,
+) -> Path:
+    """
+    Save the final population's prompts and fitness scores as CSV.
+
+    Useful for analyzing diversity and prompt variations.
+
+    Args:
+        population: Final DEAP population list.
+        generation: Generation number this population is from.
+        output_path: Destination file. Defaults to outputs/population_analysis.csv.
+
+    Returns:
+        Path: Path to the saved CSV file.
+    """
+    if output_path is None:
+        output_path = config.OUTPUTS_DIR / "population_analysis.csv"
+
+    config.OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    import csv
+
+    sorted_pop = sorted(population, key=lambda ind: ind.fitness.values[0], reverse=True)
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "rank",
+            "fitness",
+            "fitness_pct",
+            "prompt_length",
+            "prompt",
+        ])
+
+        for rank, ind in enumerate(sorted_pop, 1):
+            writer.writerow([
+                rank,
+                f"{ind.fitness.values[0]:.6f}",
+                f"{ind.fitness.values[0]:.2%}",
+                len(str(ind)),
+                str(ind).replace("\n", " "),
+            ])
+
+    logger.info(f"[VIZ] Population analysis CSV saved to {output_path}")
+    return output_path

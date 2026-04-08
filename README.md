@@ -1,59 +1,116 @@
 # EvoPrompt Optimizer
 
-> **Project HZ-2026-001** — Computational Intelligence Midterm Project  
-> **Neuroevolution-based LLM Prompt Optimization for News Classification**
+> **Proje Kodu: HZ-2026-001** — Hesapsal Zeka Dersi Vize Ödevi  
+> **Neuroevolution Tabanlı LLM Prompt Optimizasyonu ile Haber Sınıflandırma**
 
-Automatically optimizes natural language prompts for Large Language Models using genetic algorithms. The LLM's parameters remain frozen; only the system instruction evolves through selection, crossover, and mutation to maximize classification accuracy on the AG News dataset.
+Büyük dil modellerinin parametrelerini dondurarak yalnızca modele gönderilen doğal dil talimatını (prompt) genetik algoritma ile optimize eden bir sistem. AG News veri seti üzerinde 4 sınıflı haber sınıflandırma görevinde en yüksek doğruluğu sağlayan prompt'u evrimsel süreçle otomatik keşfeder.
 
 ---
 
-## Quick Start
+## 🚀 Hızlı Başlangıç
 
 ```bash
-# 1. Clone & enter project
+# 1. Proje klasörüne gir
 cd PromptOptimizer
 
-# 2. Activate virtual environment
+# 2. Sanal ortamı aktifleştir
 source venv/bin/activate
 
-# 3. Verify API connectivity
+# 3. API bağlantısını test et
 python tests/test_api_health.py
 
-# 4. Run the full evolution pipeline
+# 4. Tam pipeline'ı çalıştır
 python src/main.py
 ```
 
-**Prerequisites:**
-- A valid Google Gemini API key in `.env` ([get one free](https://aistudio.google.com/app/apikey))
+**Gereksinimler:**
 - Python 3.10+
+- Google Gemini API key (`.env` dosyasında tanımlı olmalı)
+- [Ücretsiz API key al](https://aistudio.google.com/app/apikey)
 
 ---
 
-## Configuration Variables Explained
+## 📋 Proje Nasıl Çalıştırılır
 
-All variables are read from the `.env` file. Below is a detailed explanation of each parameter, its effect, and how to tune it.
+### Adım 1: API Key Ayarla
+
+`.env` dosyasını aç ve `GEMINI_API_KEY` değerini kendi API anahtarın ile değiştir:
+
+```
+GEMINI_API_KEY=AIzaSy...senin_keyin_buraya
+```
+
+API key'in yoksa: [Google AI Studio](https://aistudio.google.com/app/apikey) adresinden ücretsiz al.
+
+### Adım 2: Sanal Ortamı Aktif Et
+
+```bash
+source venv/bin/activate
+```
+
+### Adım 3: API Bağlantısını Test Et
+
+```bash
+python tests/test_api_health.py
+```
+
+Bu komut şunları kontrol eder:
+- ✅ API key tanımlı mı?
+- ✅ SDK doğru yüklenmiş mi?
+- ✅ Model erişilebilir mi?
+- ✅ Basit bir istek başarılı mı?
+
+### Adım 4: Pipeline'ı Çalıştır
+
+```bash
+python src/main.py
+```
+
+**Pipeline şu adımları otomatik yapar:**
+1. AG News veri setini yükler ve eğitim/test olarak böler
+2. İnsan yazımı başlangıç prompt'unun doğruluğunu ölçer
+3. Genetik algoritma ile prompt'u optimize eder (her jenerasyonda popülasyondaki her birey için mini-batch değerlendirme)
+4. En iyi evolved prompt'u test setinde değerlendirir
+5. Grafikler, raporlar ve CSV istatistik dosyalarını `outputs/` klasörüne kaydeder
+
+### Adım 5: Çıktıları İncele
+
+Çalışma tamamlandığında `outputs/` klasöründe:
+
+| Dosya | Açıklama |
+|-------|----------|
+| `accuracy_curve.png` | Jenerasyonlar boyunca doğruluk değişim grafiği |
+| `best_prompt.txt` | En iyi evolved prompt (okunabilir format) |
+| `best_prompt.json` | En iyi prompt + metadata (JSON) |
+| `report.txt` | Tam evrim raporu (akademik kullanım için) |
+| `generation_stats.csv` | Her jenerasyonun detaylı istatistikleri |
+| `experiment_summary.csv` | Deney özeti — tüm metrikler tek dosyada |
+| `population_analysis.csv` | Son popülasyondaki tüm prompt'lar ve skorları |
+
+---
+
+## ⚙️ Yapılandırma Değişkenleri (.env)
+
+Tüm ayarlar `.env` dosyasından okunur. Her değişkenin anlamı ve yüksek/düşük değerlerin etkisi:
 
 ### 🔑 API & Model
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GEMINI_API_KEY` | _(required)_ | Your Google Gemini API key. Get it from [AI Studio](https://aistudio.google.com/app/apikey). |
-| `GEMINI_MODEL` | `gemini-2.5-flash-lite` | The Gemini model to use. Must be an available model name. |
+| Değişken | Varsayılan | Açıklama |
+|----------|-----------|----------|
+| `GEMINI_API_KEY` | _(gerekli)_ | Google Gemini API anahtarınız. |
+| `GEMINI_MODEL` | `gemini-2.5-flash-lite` | Kullanılacak model. |
 
-#### GEMINI_MODEL — Choosing a Model
+#### GEMINI_MODEL — Model Seçimi
 
-| Model | Speed | Cost | Best For |
-|-------|-------|------|----------|
-| `gemini-2.5-flash-lite` | ⚡ Fastest | 💰 Cheapest | **Default — best for this project** |
-| `gemini-2.5-flash` | Fast | Low | Higher accuracy, slower evolution |
-| `gemini-2.5-pro` | Slow | Higher | Maximum reasoning quality |
-| `gemini-flash-latest` | Fast | Low | Auto-updates to newest Flash |
-
-**Recommendation:** Use `gemini-2.5-flash-lite`. The evolution process makes hundreds of API calls; this model is fast, cheap, and sufficient for 4-class news classification.
+| Model | Hız | Maliyet | Ne İçin |
+|-------|-----|---------|---------|
+| `gemini-2.5-flash-lite` | ⚡ En hızlı | 💰 En ucuz | **Önerilen — bu proje için ideal** |
+| `gemini-2.5-flash` | Hızlı | Düşük | Daha yüksek doğruluk, daha yavaş |
+| `gemini-2.5-pro` | Yavaş | Daha yüksek | En iyi akıl yürütme kalitesi |
 
 ---
 
-### 🧬 Evolution Parameters
+### 🧬 Evrim Parametreleri
 
 #### POPULATION_SIZE
 
@@ -61,15 +118,15 @@ All variables are read from the `.env` file. Below is a detailed explanation of 
 POPULATION_SIZE=20
 ```
 
-Number of candidate prompts in each generation.
+Her jenerasyondaki aday prompt sayısı.
 
-| Value | Effect |
-|-------|--------|
-| **Low (5–10)** | Faster per generation, but risks premature convergence (all prompts become similar). May miss the optimal prompt. |
-| **Default (20)** | Good balance. Enough diversity to explore different phrasings without excessive API calls. |
-| **High (40–100)** | Better exploration, higher chance of finding an optimal prompt. **Much slower and more expensive** — each individual requires 50 API calls for fitness evaluation. |
+| Değer | Etki |
+|-------|------|
+| **Düşük (5-10)** | Her jenerasyon daha hızlı, ancak erken yakınsama riski. Optimal prompt'u kaçırabilir. |
+| **Varsayılan (20)** | İyi denge. Farklı ifade varyasyonlarını keşfeder, aşırı API çağrısı yapmaz. |
+| **Yüksek (40-100)** | Daha iyi keşif, optimal prompt bulma şansı artar. **Çok yavaş ve pahalı** — her birey 50 API çağrısı gerektirir. |
 
-**Trade-off:** `POPULATION_SIZE × GENERATIONS × MINI_BATCH_SIZE` = total API calls. A population of 20 over 10 generations with batch size 50 = ~10,000 calls minimum.
+**Trade-off:** `POPULATION_SIZE × JENERASYON × MINI_BATCH_SIZE` = toplam API çağrısı. 20 × 10 × 50 = **~10.000 API çağrısı** minimum.
 
 ---
 
@@ -79,15 +136,15 @@ Number of candidate prompts in each generation.
 GENERATIONS=10
 ```
 
-Number of evolution iterations (generations) to run.
+Kaç jenerasyon evrim çalıştırılacağı.
 
-| Value | Effect |
-|-------|--------|
-| **Low (3–5)** | Quick run, but the prompt may not have converged to its best form. You'll see early improvements but miss fine-tuning. |
-| **Default (10)** | Enough for the prompt to stabilize. Accuracy typically plateaus around generation 6–8. |
-| **High (20–50)** | Diminishing returns after ~15 generations. Useful for monitoring convergence behavior. Significantly increases cost. |
+| Değer | Etki |
+|-------|------|
+| **Düşük (3-5)** | Hızlı çalışma, ancak prompt henüz en iyi haline ulaşmamış olabilir. İlk iyileşmeleri görürsün ama ince ayar eksik kalır. |
+| **Varsayılan (10)** | Prompt'un stabilize olması için yeterli. Doğruluk genelde 6-8. jenerasyonda plato çizer. |
+| **Yüksek (20-50)** | 15 jenerasyondan sonra azalan verim. Yakınsama davranışını izlemek için faydalı. Maliyeti ciddi şekilde artırır. |
 
-**Tip:** Watch the `accuracy_curve.png` output. If the curve is still rising at the last generation, consider increasing this value.
+**İpucu:** `accuracy_curve.png` grafiğine bak. Eğri son jenerasyonda hâlâ yükseliyorsa bu değeri artır.
 
 ---
 
@@ -97,15 +154,15 @@ Number of evolution iterations (generations) to run.
 MUTATION_PROBABILITY=0.2
 ```
 
-Probability (0.0–1.0) that an individual's prompt text will be mutated. Mutation replaces one word with a WordNet synonym.
+Bir prompt'un mutasyona uğrama olasılığı (0.0-1.0). Mutasyon, bir kelimeyi WordNet eş anlamlısı ile değiştirir.
 
-| Value | Effect |
-|-------|--------|
-| **Low (0.05–0.1)** | Conservative. Prompts change slowly. Good if the initial prompt is already strong. Risk: slow exploration, may get stuck in a local optimum. |
-| **Default (0.2)** | Balanced. Enough mutation to explore variations without destroying good prompts. |
-| **High (0.4–0.8)** | Aggressive. Many words get swapped, creating very different prompts. Good for early exploration but can break well-performing prompts. |
+| Değer | Etki |
+|-------|------|
+| **Düşük (0.05-0.1)** | Muhafazakar. Prompt'lar yavaş değişir. Başlangıç prompt'u zaten güçlüyse iyi. Risk: yavaş keşif, yerel optimumda sıkışma. |
+| **Varsayılan (0.2)** | Dengeli. Varyasyon keşfi yeterli ama iyi prompt'ları bozmaz. |
+| **Yüksek (0.4-0.8)** | Agresif. Çok kelime değişir, çok farklı prompt'lar oluşur. Erken keşif için iyi ama iyi prompt'ları bozabilir. |
 
-**Analogy:** Think of mutation as "trying synonyms." Too little = never try new words. Too much = can't settle on a good sentence.
+**Analoji:** Mutasyon "eş anlamlı deneme" gibidir. Çok az = hiç yeni kelime denemezsin. Çok fazla = iyi bir cümleyi oturtramazsın.
 
 ---
 
@@ -115,15 +172,15 @@ Probability (0.0–1.0) that an individual's prompt text will be mutated. Mutati
 CROSSOVER_PROBABILITY=0.8
 ```
 
-Probability (0.0–1.0) that two parent prompts will exchange parts to create offspring.
+İki ebeveyn prompt'unun çaprazlanma olasılığı (0.0-1.0).
 
-| Value | Effect |
-|-------|--------|
-| **Low (0.1–0.3)** | Rare recombination. Evolution relies mostly on mutation. Slower to combine good ideas from different prompts. |
-| **Default (0.8)** | **Recommended.** High crossover lets the algorithm combine the best parts of two good prompts (e.g., "You are an expert classifier" + "Reply with only the category"). |
-| **High (0.9–1.0)** | Almost always recombines. Can be effective but may break apart a perfectly good prompt structure. |
+| Değer | Etki |
+|-------|------|
+| **Düşük (0.1-0.3)** | Nadir rekombinasyon. Evrim çoğunlukla mutasyona güvenir. İyi fikirleri birleştirmek yavaş olur. |
+| **Varsayılan (0.8)** | **Önerilen.** Yüksek çaprazlama, iki iyi prompt'un en iyi kısımlarını birleştirmeye izin verir. |
+| **Yüksek (0.9-1.0)** | Neredeyse her zaman çaprazlar. Etkili olabilir ama mükemmel bir prompt yapısını bozabilir. |
 
-**Rule of thumb:** `CROSSOVER_PROBABILITY` should generally be higher than `MUTATION_PROBABILITY` (0.8 vs 0.2 is a classic ratio).
+**Kural:** `CROSSOVER_PROBABILITY` genellikle `MUTATION_PROBABILITY`'den yüksek olmalı (0.8 vs 0.2 klasik oran).
 
 ---
 
@@ -133,13 +190,13 @@ Probability (0.0–1.0) that two parent prompts will exchange parts to create of
 TOURNAMENT_SIZE=3
 ```
 
-Number of individuals competing in each tournament selection. The best from the tournament is selected as a parent.
+Her turnuva seçiminde yarışan birey sayısı.
 
-| Value | Effect |
-|-------|--------|
-| **Low (2)** | Weak selection pressure. Even mediocre prompts have a chance to reproduce. Maintains diversity but slower convergence. |
-| **Default (3)** | Good balance. The best 1 out of 3 has a reasonable chance while still allowing decent prompts to participate. |
-| **High (5–10)** | Strong selection pressure. Only the very best prompts reproduce. Fast convergence but risks losing diversity and getting stuck. |
+| Değer | Etki |
+|-------|------|
+| **Düşük (2)** | Zayıf seçim baskısı. Ortanca prompt'lar bile üreyebilir. Çeşitlilik korunur ama yakınsama yavaş olur. |
+| **Varsayılan (3)** | İyi denge. En iyi 1/3'ün makul şansı var, yine de kaliteli prompt'lar katılabiliyor. |
+| **Yüksek (5-10)** | Güçlü seçim baskısı. Sadece en iyiler ürer. Hızlı yakınsama ama çeşitlilik kaybı riski. |
 
 ---
 
@@ -149,168 +206,153 @@ Number of individuals competing in each tournament selection. The best from the 
 MINI_BATCH_SIZE=50
 ```
 
-Number of news headlines sampled from the development pool to evaluate each individual's fitness (accuracy).
+Her bireyin fitness (doğruluk) değerlendirmesi için kullanılan haber başlığı sayısı.
 
-| Value | Effect |
-|-------|--------|
-| **Low (10–20)** | Very fast per individual. But accuracy estimate is noisy — a prompt might score 80% on one batch and 40% on another. Leads to unreliable selection. |
-| **Default (50)** | Reasonable accuracy estimate (~7% margin of error at 50% accuracy). Good speed/quality trade-off. |
-| **High (100–500)** | More accurate fitness evaluation. Better selection decisions. **But** each individual requires more API calls, making evolution much slower and more expensive. |
+| Değer | Etki |
+|-------|------|
+| **Düşük (10-20)** | Çok hızlı. Ama doğruluk tahmini gürültülü — bir prompt bir batch'te %80, diğerinde %40 alabilir. Güvenilmez seçim. |
+| **Varsayılan (50)** | Makul doğruluk tahmini (~%7 hata payı). Hız/kalite dengesi iyi. |
+| **Yüksek (100-500)** | Daha doğru fitness değerlendirmesi. Daha iyi seçim kararları. **Ama** her birey daha fazla API çağrısı gerektirir, evrim çok yavaşlar. |
 
-**Impact on cost:** This is the **most important parameter for API usage**. At `MINI_BATCH_SIZE=50`, each individual costs 50 API calls. At `MINI_BATCH_SIZE=200`, it costs 4× more.
+**API maliyetine etkisi:** **En önemli parametre.** `MINI_BATCH_SIZE=50` ile her birey 50 API çağrısı. `MINI_BATCH_SIZE=200` ile 4× daha fazla.
 
-**Formula:** Total API calls ≈ `POPULATION_SIZE × GENERATIONS × MINI_BATCH_SIZE`  
-With defaults: 20 × 10 × 50 = **~10,000 API calls**
+**Formül:** Toplam API çağrısı ≈ `POPULATION_SIZE × JENERASYON × MINI_BATCH_SIZE`  
+Varsayılanlarla: 20 × 10 × 50 = **~10.000 API çağrısı**
 
 ---
 
 ### ⏱️ Rate Limiting
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `API_CALL_DELAY` | `4.0` | Seconds to wait between each API call. Prevents hitting rate limits. |
-| `API_MAX_RETRIES` | `3` | Number of retry attempts on transient errors (429, 500). |
-| `API_BACKOFF_FACTOR` | `2.0` | Exponential backoff multiplier. Wait time = `max(API_CALL_DELAY, BACKOFF_FACTOR ^ attempt)`. |
+| Değişken | Varsayılan | Açıklama |
+|----------|-----------|----------|
+| `API_CALL_DELAY` | `4.0` | Her API çağrısı arası bekleme süresi (saniye). |
+| `API_MAX_RETRIES` | `3` | Geçici hatalarda yeniden deneme sayısı. |
+| `API_BACKOFF_FACTOR` | `2.0` | Üstel geri çekilme çarpanı. |
 
-#### Tuning Rate Limits
+#### Rate Limit Ayarlama
 
-| Situation | Change |
-|-----------|--------|
-| **Getting 429 errors** | Increase `API_CALL_DELAY` to 6–8 seconds |
-| **Too slow, no errors** | Decrease `API_CALL_DELAY` to 2–3 seconds (if your quota allows) |
-| **Frequent transient failures** | Increase `API_MAX_RETRIES` to 5 |
+| Durum | Değişiklik |
+|-------|-----------|
+| **429 hatası alıyorsan** | `API_CALL_DELAY`'i 6-8 saniyeye çıkar |
+| **Çok yavaş, hata yok** | `API_CALL_DELAY`'i 2-3 saniyeye düşür (kotan yetiyorsa) |
+| **Sık geçici hatalar** | `API_MAX_RETRIES`'ı 5'e çıkar |
 
-**Warning:** The free tier of Gemini API has strict rate limits (15 RPM for Flash-Lite). With `API_CALL_DELAY=4.0`, you make ~15 calls/minute, which is at the limit. Do not decrease below 4.0 on the free tier.
-
----
-
-### 📊 Data Split
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TEST_SPLIT_RATIO` | `0.5` | Fraction of the test dataset held out as final test set. The rest becomes the development pool. |
-| `RANDOM_SEED` | `42` | Seed for reproducible data splitting and evolution. |
-
-#### TEST_SPLIT_RATIO
-
-| Value | Effect |
-|-------|--------|
-| **Low (0.2–0.3)** | Large development pool (more data for evolution), small test set (less reliable final evaluation). |
-| **Default (0.5)** | Equal split: 3,800 for evolution, 3,800 for final test. Balanced. |
-| **High (0.7–0.8)** | Small development pool, large test set. More reliable final evaluation but less data to evolve on. |
+**Uyarı:** Gemini API free tier'ında sıkı rate limitleri var (Flash-Lite için 15 RPM). `API_CALL_DELAY=4.0` ile ~15 çağrı/dakika, sınıra yakın. 4.0'ın altına düşürme.
 
 ---
 
-## 📁 Project Structure
+### 📊 Veri Bölme
+
+| Değişken | Varsayılan | Açıklama |
+|----------|-----------|----------|
+| `TEST_SPLIT_RATIO` | `0.5` | Test veri setinin ne kadarı final test olarak ayrılır. |
+| `RANDOM_SEED` | `42` | Tekrarlanabilir sonuçlar için rastgelelik tohumu. |
+| `TEST_SAMPLE_SIZE` | `50` | Final test değerlendirmesinde kullanılacak örnek sayısı. `-1` = tamamı (çok pahalı!). |
+
+---
+
+## 📁 Proje Yapısı
 
 ```
 PromptOptimizer/
 ├── src/
-│   ├── config.py            # Central configuration (reads .env)
-│   ├── data_loader.py       # AG News loading, splitting, caching
-│   ├── llm_interface.py     # Gemini API wrapper (google-genai SDK)
-│   ├── evolution.py         # DEAP genetic algorithm engine
-│   ├── visualizer.py        # Charts, reports, prompt saving
-│   └── main.py              # Full pipeline orchestrator
+│   ├── config.py            # Merkezi yapılandırma (.env okur)
+│   ├── data_loader.py       # AG News yükleme, bölme, önbellekleme
+│   ├── llm_interface.py     # Gemini API wrapper (yeni google-genai SDK)
+│   ├── evolution.py         # DEAP genetik algoritma motoru
+│   ├── visualizer.py        # Grafikler, raporlar, CSV istatistikler
+│   └── main.py              # Tam pipeline orkestratörü
 ├── tests/
-│   ├── test_api_health.py   # API connectivity & health check
-│   └── test_e2e.py          # 23 unit tests for all modules
+│   ├── test_api_health.py   # API bağlantı ve sağlık kontrolü
+│   └── test_e2e.py          # 23 birim testi
 ├── data/
-│   ├── raw/                 # (reserved for raw data)
-│   └── processed/           # Cached dev_pool.csv and test_set.csv
-├── dataset/                 # Source AG News CSV files
-├── outputs/                 # Generated results (created at runtime)
-│   ├── accuracy_curve.png   # Fitness progression chart
-│   ├── best_prompt.txt      # Best evolved prompt (human-readable)
-│   ├── best_prompt.json     # Best prompt with metadata
-│   └── report.txt           # Full evolution report
-├── .env                     # Your configuration (DO NOT commit)
-├── .env.example             # Template for .env
+│   ├── raw/                 # (ham veri için ayrılmış)
+│   └── processed/           # Önbelleklenmiş dev_pool.csv ve test_set.csv
+├── dataset/                 # Kaynak AG News CSV dosyaları
+├── outputs/                 # Çalışma sonrası oluşan sonuçlar
+│   ├── accuracy_curve.png   # Doğruluk değişim grafiği
+│   ├── best_prompt.txt      # En iyi evolved prompt (okunabilir)
+│   ├── best_prompt.json     # En iyi prompt + metadata
+│   ├── report.txt           # Tam evrim raporu
+│   ├── generation_stats.csv # Her jenerasyonun istatistikleri
+│   ├── experiment_summary.csv # Deney özeti - tüm metrikler
+│   └── population_analysis.csv # Son popülasyon analizi
+├── .env                     # Yapılandırman (ASLA commit'leme!)
+├── .env.example             # .env şablonu
 ├── .gitignore
 ├── requirements.txt
-├── venv/                    # Python virtual environment
+├── venv/                    # Python sanal ortamı
 └── README.md
 ```
 
 ---
 
-## 🧪 Testing
+## 🧪 Testler
 
 ```bash
-# Activate virtual environment
+# Sanal ortamı aktifleştir
 source venv/bin/activate
 
-# Run all unit tests (23 tests)
+# Tüm birim testlerini çalıştır (23 test)
 pytest tests/test_e2e.py -v
 
-# Run API health check
+# API sağlık kontrolü
 python tests/test_api_health.py
-
-# Run tests with coverage
-pytest tests/ -v --cov=src
 ```
 
 ---
 
-## 🚀 Running the Pipeline
+## � Çıktı Dosyaları Detayları
 
-```bash
-source venv/bin/activate
-python src/main.py
+### CSV İstatistik Dosyaları
+
+**`generation_stats.csv`** — Her jenerasyonun detaylı istatistikleri:
+```
+generation, avg_fitness, max_fitness, min_fitness, avg_fitness_pct, max_fitness_pct, min_fitness_pct, fitness_spread
+0, 0.450000, 0.520000, 0.380000, 45.00%, 52.00%, 38.00%, 0.140000
+1, 0.510000, 0.600000, 0.420000, 51.00%, 60.00%, 42.00%, 0.180000
 ```
 
-### What Happens
+**`experiment_summary.csv`** — Tüm deney metrikleri tek dosyada:
+- Model, popülasyon, jenerasyon, mutasyon/çaprazlama olasılıkları
+- Başlangıç, en iyi dev ve test doğrulukları
+- İyileşme yüzdesi, yakınsama jenerasyonu
+- Toplam API çağrısı tahmini
 
-1. **Config validation** — checks API key and parameters
-2. **Data loading** — loads AG News, splits into dev pool + test set
-3. **Initial prompt evaluation** — measures accuracy of the human-written seed prompt
-4. **Evolution** — runs the genetic algorithm for the configured number of generations
-5. **Test evaluation** — evaluates the best evolved prompt on the held-out test set
-6. **Output generation** — creates accuracy chart, saves best prompt, writes report
-
-### Expected Runtime
-
-With default parameters (population=20, generations=10, batch=50, delay=4s):
-- **Per individual:** ~50 API calls × 4s = ~200s (3.3 minutes)
-- **Per generation:** 20 individuals × 3.3 min = ~66 minutes
-- **Total:** ~10 generations × 66 min = **~11 hours**
-
-**To speed up:**
-- Reduce `POPULATION_SIZE` to 10 → ~5.5 hours
-- Reduce `MINI_BATCH_SIZE` to 20 → ~4.5 hours
-- Reduce `GENERATIONS` to 5 → ~5.5 hours
-- Reduce `API_CALL_DELAY` to 2s (if quota allows) → ~5.5 hours
+**`population_analysis.csv`** — Son popülasyondaki her birey:
+- Sıralama, fitness skoru, prompt uzunluğu
+- Her prompt'un tam metni
 
 ---
 
-## 📚 Academic References
+## 📚 Akademik Kaynaklar
 
-This project is inspired by:
+Bu proje aşağıdaki çalışmalardan ilham almıştır:
 
-- **Sprig (April 2026)** — Genetic algorithm for system prompt optimization via editing operations
-- **GEPA (2025–2026)** — Genetic Evolutionary Prompt Optimization, showing GAs compete with RL methods
-- **RoboPhd (April 2026)** — LLM-guided evolutionary agent optimization
+- **Sprig (Nisan 2026)** — Düzenleme operasyonları tabanlı genetik algoritma ile sistem prompt optimizasyonu
+- **GEPA (2025-2026)** — Genetik Evrimsel Prompt Optimizasyonu, GA'ların RL yöntemleriyle rekabet edebildiğini gösterir
+- **RoboPhd (Nisan 2026)** — LLM destekli evrimsel ajan optimizasyonu
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Teknoloji Yığını
 
-| Component | Technology |
-|-----------|-----------|
-| Language | Python 3.10+ |
-| LLM API | Google Gemini (new `google-genai` SDK ≥ 1.0.0) |
+| Bileşen | Teknoloji |
+|---------|-----------|
+| Dil | Python 3.10+ |
+| LLM API | Google Gemini (yeni `google-genai` SDK ≥ 1.0.0) |
 | Model | Gemini 2.5 Flash-Lite |
-| Genetic Algorithm | DEAP 1.4+ |
-| Synonym Lookup | NLTK WordNet |
-| Data Processing | Pandas, scikit-learn |
-| Visualization | Matplotlib |
-| Testing | pytest |
+| Genetik Algoritma | DEAP 1.4+ |
+| Eş Anlamlı Arama | NLTK WordNet |
+| Veri İşleme | Pandas, scikit-learn |
+| Görselleştirme | Matplotlib |
+| Test | pytest |
 
 ---
 
-## ⚠️ Notes
+## ⚠️ Önemli Notlar
 
-- **API Key Quota:** The free tier has daily/monthly limits. If you hit 429 errors, wait or enable billing.
-- **Cost:** With default settings, expect ~10,000 API calls. On the free tier, this is within limits but close.
-- **Reproducibility:** Set `RANDOM_SEED` to get the same data split each run. Evolution involves randomness, so results may vary.
-- **.env file:** Never commit your `.env` file. Use `.env.example` as a template.
+- **API Key Kotası:** Free tier'ın günlük/aylık limitleri vardır. 429 hatası alırsan bekle veya billing'i aç.
+- **Maliyet:** Varsayılan ayarlarla ~10.000 API çağrısı yapılır. Free tier'da bu sınıra yakındır.
+- **Tekrarlanabilirlik:** `RANDOM_SEED` ayarla ki her çalışmada aynı veri bölünsün. Evrimde rastgelelik var, sonuçlar değişebilir.
+- **`.env` dosyası:** Asla `.env` dosyasını commit'leme. `.env.example`'ı şablon olarak kullan.

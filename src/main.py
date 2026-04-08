@@ -136,6 +136,25 @@ def main() -> None:
         test_accuracy=test_accuracy,
     )
     logger.info(f"Report: {report_path}")
+
+    # CSV statistical exports
+    gen_stats_path = visualizer.save_generation_stats_csv(history)
+    logger.info(f"Generation stats CSV: {gen_stats_path}")
+
+    summary_csv_path = visualizer.save_experiment_summary_csv(
+        history=history,
+        best_prompt=best_prompt,
+        best_fitness=best_fitness,
+        initial_fitness=initial_accuracy,
+        test_accuracy=test_accuracy,
+    )
+    logger.info(f"Experiment summary CSV: {summary_csv_path}")
+
+    pop_analysis_path = visualizer.save_population_analysis_csv(
+        population=final_population,
+        generation=config.GENERATIONS - 1,
+    )
+    logger.info(f"Population analysis CSV: {pop_analysis_path}")
     print()
 
     # ── Final Summary ────────────────────────────────────────────────────
