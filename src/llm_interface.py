@@ -1,9 +1,8 @@
 """
 EvoPrompt Optimizer - LLM Interface Module
 
-Abstracts communication with the Google Gemini API using the new
-google-genai SDK (>= 1.0.0). The deprecated google-generativeai
-SDK is NOT used.
+Abstracts communication with the Groq API (groq SDK).
+Groq provides extremely fast inference with a very generous free tier.
 
 Handles:
 - Prompt submission with headline classification
@@ -15,8 +14,8 @@ Handles:
 
 import time
 import logging
-from google import genai
-from google.genai import errors as genai_errors
+from groq import Groq
+from groq import APIError
 
 import config
 
@@ -26,17 +25,17 @@ logger = logging.getLogger(__name__)
 
 # ─── Client Initialization ────────────────────────────────────────────────────
 
-def _get_client() -> genai.Client:
+def _get_client() -> Groq:
     """
-    Create and return a Gemini API client.
+    Create and return a Groq API client.
 
-    The client reads GEMINI_API_KEY from environment variables
+    The client reads GROQ_API_KEY from environment variables
     (automatically loaded by python-dotenv from .env file).
 
     Returns:
-        genai.Client: Configured Gemini API client instance.
+        Groq: Configured Groq API client instance.
     """
-    return genai.Client(api_key=config.GEMINI_API_KEY)
+    return Groq(api_key=config.GROQ_API_KEY)
 
 
 # ─── Response Parsing ─────────────────────────────────────────────────────────
@@ -104,23 +103,28 @@ def classify_text(prompt: str, title: str) -> str | None:
             else:
                 time.sleep(config.API_CALL_DELAY)
 
-            # Send request using new google-genai SDK
-            response = client.models.generate_content(
-                model=config.GEMINI_MODEL,
-                contents=full_prompt,
+            # Send request using Groq SDK
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {"role": "user", "content": full_prompt},
+                ],
+                model=config.GROQ_MODEL,
+                temperature=0.1,  # Low temperature for consistent classification
+                max_tokens=10,    # We only need one word (the category)
             )
 
-            return _parse_response(response.text)
+            response_text = chat_completion.choices[0].message.content
+            return _parse_response(response_text)
 
-        except (genai_errors.APIError, genai_errors.ClientError) as e:
+        except APIError as e:
             last_error = e
             logger.error(f"API error on attempt {attempt}: {e}")
 
             # Rate limit errors (429) — wait longer and retry
-            if hasattr(e, 'code') and e.code == 429:
+            if hasattr(e, 'status_code') and e.status_code == 429:
                 continue
             # Server errors — retry
-            if hasattr(e, 'code') and 500 <= e.code < 600:
+            if hasattr(e, 'status_code') and 500 <= e.status_code < 600:
                 continue
             # Other errors — fail immediately
             break

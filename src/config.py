@@ -45,16 +45,16 @@ RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
 # Set to -1 to use the full test set (expensive!)
 TEST_SAMPLE_SIZE = int(os.getenv("TEST_SAMPLE_SIZE", "50"))
 
-# ─── LLM / Gemini Configuration ──────────────────────────────────────────────
+# ─── LLM / Groq Configuration ────────────────────────────────────────────────
 
-# NOTE: Uses the new Google GenAI SDK (google-genai >= 1.0.0)
-# The old google-generativeai SDK is deprecated since late 2024.
-# API key is read automatically from GEMINI_API_KEY environment variable.
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+# Uses the Groq SDK (groq >= 0.15.0)
+# API key is read automatically from GROQ_API_KEY environment variable.
+# Groq free tier: ~6,000-14,000 requests/minute (very generous).
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 # Rate limiting & retry
-API_CALL_DELAY = float(os.getenv("API_CALL_DELAY", "4.0"))
+API_CALL_DELAY = float(os.getenv("API_CALL_DELAY", "1.0"))
 API_MAX_RETRIES = int(os.getenv("API_MAX_RETRIES", "3"))
 API_BACKOFF_FACTOR = float(os.getenv("API_BACKOFF_FACTOR", "2.0"))
 
@@ -87,10 +87,11 @@ def validate_config() -> None:
     Validate that all required configuration values are present and valid.
     Raises ValueError if any critical configuration is missing or invalid.
     """
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "your_api_key_here":
+    if not GROQ_API_KEY or GROQ_API_KEY == "your_api_key_here":
         raise ValueError(
-            "GEMINI_API_KEY is not set. "
-            "Please copy .env.example to .env and add your API key."
+            "GROQ_API_KEY is not set. "
+            "Please copy .env.example to .env and add your API key "
+            "from https://console.groq.com/keys"
         )
 
     if POPULATION_SIZE < 2:

@@ -26,7 +26,7 @@ class TestConfig:
         import config
         assert hasattr(config, "POPULATION_SIZE")
         assert hasattr(config, "GENERATIONS")
-        assert hasattr(config, "GEMINI_MODEL")
+        assert hasattr(config, "GROQ_MODEL")
 
     def test_population_size_valid(self):
         """Population size is at least 2."""
@@ -61,19 +61,20 @@ class TestConfig:
     def test_validate_config_with_key(self, monkeypatch):
         """validate_config passes when API key is set."""
         import config
-        monkeypatch.setenv("GEMINI_API_KEY", "test_key_123")
+        monkeypatch.setenv("GROQ_API_KEY", "test_key_123")
+        monkeypatch.setattr(config, "GROQ_API_KEY", "test_key_123")
         # Should not raise
         config.validate_config()
 
     def test_validate_config_without_key(self, monkeypatch):
         """validate_config raises ValueError when API key is missing."""
         # Override both env and .env-loaded value
-        monkeypatch.setenv("GEMINI_API_KEY", "")
+        monkeypatch.setenv("GROQ_API_KEY", "")
         # Force reload config module to pick up the empty key
         import importlib
         import config
-        monkeypatch.setattr(config, "GEMINI_API_KEY", "")
-        with pytest.raises(ValueError, match="GEMINI_API_KEY"):
+        monkeypatch.setattr(config, "GROQ_API_KEY", "")
+        with pytest.raises(ValueError, match="GROQ_API_KEY"):
             config.validate_config()
 
 

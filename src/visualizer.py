@@ -118,7 +118,7 @@ def save_best_prompt(
         f.write("=" * 60 + "\n\n")
         f.write(f"Accuracy: {fitness:.4f} ({fitness:.2%})\n")
         f.write(f"Timestamp: {timestamp}\n")
-        f.write(f"Model: {config.GEMINI_MODEL}\n\n")
+        f.write(f"Model: {config.GROQ_MODEL}\n\n")
         f.write("-" * 60 + "\n")
         f.write("PROMPT:\n")
         f.write("-" * 60 + "\n")
@@ -129,7 +129,7 @@ def save_best_prompt(
     metadata = {
         "prompt": prompt,
         "accuracy": fitness,
-        "model": config.GEMINI_MODEL,
+        "model": config.GROQ_MODEL,
         "timestamp": timestamp,
         "config": {
             "population_size": config.POPULATION_SIZE,
@@ -192,7 +192,7 @@ def generate_report(
         f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "",
         "--- Configuration ---",
-        f"Model:              {config.GEMINI_MODEL}",
+        f"Model:              {config.GROQ_MODEL}",
         f"Population Size:    {config.POPULATION_SIZE}",
         f"Generations:        {config.GENERATIONS}",
         f"Mutation Prob:      {config.MUTATION_PROBABILITY:.2f}",
@@ -351,7 +351,7 @@ def save_experiment_summary_csv(
     rows = [
         ["metric", "value"],
         ["timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-        ["model", config.GEMINI_MODEL],
+        ["model", config.GROQ_MODEL],
         ["population_size", config.POPULATION_SIZE],
         ["generations", config.GENERATIONS],
         ["mutation_probability", config.MUTATION_PROBABILITY],

@@ -1,8 +1,8 @@
 # EvoPrompt Optimizer - Dependencies
 # Computational Intelligence Midterm Project - HZ-2026-001
 
-# Google Gemini API (new SDK - google-genai, NOT deprecated google-generativeai)
-google-genai>=1.0.0
+# Groq API (fast inference, generous free tier)
+groq>=0.15.0
 
 # Evolutionary Algorithms
 deap>=1.4.1

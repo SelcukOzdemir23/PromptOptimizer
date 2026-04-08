@@ -2,8 +2,8 @@
 EvoPrompt Optimizer - API Health Check & Connection Test
 
 Run this script to verify that:
-1. The API key is configured
-2. The google-genai SDK can authenticate
+1. The Groq API key is configured
+2. The groq SDK can authenticate
 3. The target model is accessible
 4. A basic text generation call succeeds
 
@@ -19,8 +19,8 @@ from pathlib import Path
 # Add src/ to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from google import genai
-from google.genai import errors as genai_errors
+from groq import Groq
+from groq import APIError
 import config
 
 
@@ -35,68 +35,57 @@ def check_api_key() -> bool:
     """Verify that an API key is configured."""
     print_section("1. API Key Check")
 
-    if not config.GEMINI_API_KEY or config.GEMINI_API_KEY == "your_api_key_here":
-        print("❌ FAIL: GEMINI_API_KEY is not set.")
-        print("   → Edit .env and add your API key from:")
-        print("     https://aistudio.google.com/app/apikey")
+    if not config.GROQ_API_KEY or config.GROQ_API_KEY == "your_api_key_here":
+        print("❌ FAIL: GROQ_API_KEY is not set.")
+        print("   → Get your free API key from:")
+        print("     https://console.groq.com/keys")
         return False
 
-    masked = config.GEMINI_API_KEY[:4] + "..." + config.GEMINI_API_KEY[-4:]
+    masked = config.GROQ_API_KEY[:4] + "..." + config.GROQ_API_KEY[-4:]
     print(f"✅ PASS: API key is set ({masked})")
     return True
 
 
 def check_sdk_import() -> bool:
-    """Verify that the google-genai SDK can be imported."""
+    """Verify that the groq SDK can be imported."""
     print_section("2. SDK Import Check")
 
     try:
-        from google import genai
-        print(f"✅ PASS: google-genai SDK imported (version: {genai.__version__})")
+        from groq import Groq
+        import groq
+        version = getattr(groq, '__version__', 'unknown')
+        print(f"✅ PASS: groq SDK imported (version: {version})")
         return True
     except ImportError as e:
-        print(f"❌ FAIL: Cannot import google-genai SDK: {e}")
+        print(f"❌ FAIL: Cannot import groq SDK: {e}")
         return False
 
 
 def check_model_availability() -> bool:
-    """Verify that the configured model is available."""
+    """Verify that the configured model is accessible."""
     print_section("3. Model Availability Check")
 
-    client = genai.Client(api_key=config.GEMINI_API_KEY)
-    print(f"   Target model: {config.GEMINI_MODEL}")
+    client = Groq(api_key=config.GROQ_API_KEY)
+    print(f"   Target model: {config.GROQ_MODEL}")
 
     try:
-        models = client.models.list()
-        model_names = [m.name for m in models]
+        # Groq doesn't have a models.list() in free tier, so we test
+        # with a minimal request instead
+        response = client.chat.completions.create(
+            messages=[{"role": "user", "content": "Hi"}],
+            model=config.GROQ_MODEL,
+            max_tokens=5,
+        )
+        text = response.choices[0].message.content
+        print(f"✅ PASS: {config.GROQ_MODEL} responded: '{text[:50]}'")
+        return True
 
-        # Check exact match
-        full_target = f"models/{config.GEMINI_MODEL}"
-        if full_target in model_names:
-            print(f"✅ PASS: {config.GEMINI_MODEL} is available")
-            return True
-
-        # Check partial match (e.g., gemini-2.5-flash-latest alias)
-        partial_matches = [m for m in model_names if config.GEMINI_MODEL in m]
-        if partial_matches:
-            print(f"⚠️  WARNING: Exact match not found, but found:")
-            for m in partial_matches[:3]:
-                print(f"      - {m}")
-            print(f"   → The alias '{config.GEMINI_MODEL}' may still work at runtime.")
-            return True
-
-        print(f"❌ FAIL: {config.GEMINI_MODEL} not found in available models.")
-        print(f"   Available Gemini models:")
-        for m in [x for x in model_names if "gemini" in x.lower()][:5]:
-            print(f"      - {m}")
-        return False
-
-    except genai_errors.APIError as e:
-        print(f"❌ FAIL: API error listing models: {e}")
-        if hasattr(e, 'code') and e.code == 401:
-            print("   → Invalid API key. Check your GEMINI_API_KEY.")
-        elif hasattr(e, 'code') and e.code == 429:
-            print("   → Quota exceeded. Check your billing/usage limits.")
+    except APIError as e:
+        print(f"❌ FAIL: API error: {e}")
+        if hasattr(e, 'status_code') and e.status_code == 401:
+            print("   → Invalid API key. Check your GROQ_API_KEY.")
+        elif hasattr(e, 'status_code') and e.status_code == 429:
+            print("   → Rate limit exceeded. Wait and try again.")
         return False
     except Exception as e:
         print(f"❌ FAIL: Unexpected error: {e}")
@@ -107,33 +96,31 @@ def check_text_generation() -> bool:
     """Test a minimal text generation call."""
     print_section("4. Text Generation Test")
 
-    client = genai.Client(api_key=config.GEMINI_API_KEY)
+    client = Groq(api_key=config.GROQ_API_KEY)
     prompt = "Reply with exactly one word: YES"
 
     print(f"   Sending: '{prompt}'")
-    print(f"   Model: {config.GEMINI_MODEL}")
+    print(f"   Model: {config.GROQ_MODEL}")
 
     try:
         start = time.time()
-        response = client.models.generate_content(
-            model=config.GEMINI_MODEL,
-            contents=prompt,
+        response = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model=config.GROQ_MODEL,
+            max_tokens=10,
+            temperature=0.1,
         )
         elapsed = time.time() - start
 
-        text = response.text.strip()
+        text = response.choices[0].message.content.strip()
         print(f"✅ PASS: Response received in {elapsed:.2f}s")
         print(f"   Response: '{text[:100]}'")
         return True
 
-    except genai_errors.APIError as e:
-        elapsed = time.time() - start if 'start' in dir() else 0
-        print(f"❌ FAIL: API error after {elapsed:.1f}s: {e}")
-        if hasattr(e, 'code') and e.code == 429:
-            print("   → Rate limit / quota exceeded.")
-            print("   → Wait a few minutes and try again, or check billing.")
-        elif hasattr(e, 'code') and e.code == 400:
-            print("   → Bad request. Model name may be incorrect.")
+    except APIError as e:
+        print(f"❌ FAIL: API error: {e}")
+        if hasattr(e, 'status_code') and e.status_code == 429:
+            print("   → Rate limit exceeded.")
         return False
     except Exception as e:
         print(f"❌ FAIL: Unexpected error: {e}")
@@ -179,7 +166,7 @@ def check_classification_prompt() -> bool:
 def main() -> None:
     """Run all health checks."""
     print("=" * 60)
-    print("  EvoPrompt Optimizer — API Health Check")
+    print("  EvoPrompt Optimizer — Groq API Health Check")
     print("=" * 60)
 
     results = {
@@ -200,15 +187,15 @@ def main() -> None:
 
     print()
     if all_pass:
-        print("🎉 All checks passed! The API is ready for evolution.")
+        print("🎉 All checks passed! Groq API is ready for evolution.")
         print("   Run: python src/main.py")
     else:
         print("⚠️  Some checks failed. Fix the issues before running evolution.")
         print()
         print("   Common fixes:")
-        print("   - Check API key in .env file")
-        print("   - Get a new key from: https://aistudio.google.com/app/apikey")
-        print("   - Check billing/quota at: https://console.cloud.google.com/")
+        print("   - Get API key from: https://console.groq.com/keys")
+        print("   - Add to .env: GROQ_API_KEY=gsk_...")
+        print("   - Check model name in .env")
 
     print("=" * 60)
 
