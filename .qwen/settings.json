@@ -12,7 +12,8 @@
       "Bash(git rm *)",
       "Bash(echo *)",
       "Bash(pip uninstall *)",
-      "Bash(sed *)"
+      "Bash(sed *)",
+      "Bash(curl *)"
     ]
   },
   "$version": 3

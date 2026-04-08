@@ -45,13 +45,12 @@ RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
 # Set to -1 to use the full test set (expensive!)
 TEST_SAMPLE_SIZE = int(os.getenv("TEST_SAMPLE_SIZE", "50"))
 
-# ─── LLM / Groq Configuration ────────────────────────────────────────────────
+# ─── LLM / Ollama Configuration ──────────────────────────────────────────────
 
-# Uses the Groq SDK (groq >= 0.15.0)
-# API key is read automatically from GROQ_API_KEY environment variable.
-# Groq free tier: ~6,000-14,000 requests/minute (very generous).
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+# Uses local Ollama instance (http://localhost:11434)
+# No API key needed — runs entirely on your machine.
+# Model must be installed: `ollama pull llama3.1:8b`
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 
 # Rate limiting & retry
 API_CALL_DELAY = float(os.getenv("API_CALL_DELAY", "1.0"))
@@ -87,12 +86,7 @@ def validate_config() -> None:
     Validate that all required configuration values are present and valid.
     Raises ValueError if any critical configuration is missing or invalid.
     """
-    if not GROQ_API_KEY or GROQ_API_KEY == "your_api_key_here":
-        raise ValueError(
-            "GROQ_API_KEY is not set. "
-            "Please copy .env.example to .env and add your API key "
-            "from https://console.groq.com/keys"
-        )
+    # No API key needed for Ollama (local inference)
 
     if POPULATION_SIZE < 2:
         raise ValueError("POPULATION_SIZE must be at least 2.")

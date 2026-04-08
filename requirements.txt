@@ -1,8 +1,9 @@
 # EvoPrompt Optimizer - Dependencies
 # Computational Intelligence Midterm Project - HZ-2026-001
 
-# Groq API (fast inference, generous free tier)
-groq>=0.15.0
+# LLM Inference — Ollama (local, no API key needed)
+# Ollama must be installed: https://ollama.ai
+# httpx is used for REST API calls (already included with other deps)
 
 # Evolutionary Algorithms
 deap>=1.4.1

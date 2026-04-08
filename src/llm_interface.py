@@ -1,44 +1,27 @@
 """
 EvoPrompt Optimizer - LLM Interface Module
 
-Abstracts communication with the Groq API (groq SDK).
-Groq provides extremely fast inference with a very generous free tier.
+Abstracts communication with Ollama (local LLM inference).
+Ollama runs locally at http://localhost:11434 — no API key needed, no rate limits.
 
 Handles:
 - Prompt submission with headline classification
 - Response parsing and label normalization
-- Exponential backoff retry on transient errors
-- Rate limiting (configurable delay between calls)
-- Batch classification with error handling
+- Retry on transient errors (connection failures)
+- Batch classification with progress reporting
 """
 
 import time
 import logging
-from groq import Groq
-from groq import APIError
+import httpx
 
 import config
 
 # Configure module logger
 logger = logging.getLogger(__name__)
 
-
-# ─── Client Initialization ────────────────────────────────────────────────────
-
-def _get_client() -> Groq:
-    """
-    Create and return a Groq API client.
-
-    max_retries=0: We handle retries manually in classify_text()
-    to avoid double-retry storms with Groq's built-in retry.
-
-    The client reads GROQ_API_KEY from environment variables
-    (automatically loaded by python-dotenv from .env file).
-
-    Returns:
-        Groq: Configured Groq API client instance.
-    """
-    return Groq(api_key=config.GROQ_API_KEY, max_retries=0)
+# Ollama API endpoint
+OLLAMA_URL = "http://localhost:11434/api/chat"
 
 
 # ─── Response Parsing ─────────────────────────────────────────────────────────
@@ -76,12 +59,12 @@ def _parse_response(response_text: str) -> str | None:
 
 def classify_text(prompt: str, title: str) -> str | None:
     """
-    Classify a single news headline using the LLM.
+    Classify a single news headline using the local Ollama model.
 
-    Fills the {title} placeholder in the prompt, sends it to the model,
+    Fills the {title} placeholder in the prompt, sends it to Ollama,
     and parses the response into a class label.
 
-    Implements exponential backoff retry on transient API errors.
+    Implements retry on connection errors.
 
     Args:
         prompt: Prompt template with {title} placeholder.
@@ -90,13 +73,11 @@ def classify_text(prompt: str, title: str) -> str | None:
     Returns:
         str | None: Predicted class label or None if all retries fail.
     """
-    client = _get_client()
     full_prompt = prompt.format(title=title)
 
     last_error = None
     for attempt in range(1, config.API_MAX_RETRIES + 1):
         try:
-            # Rate limiting: wait between API calls
             if attempt > 1:
                 backoff = config.API_BACKOFF_FACTOR ** (attempt - 1)
                 wait_time = max(config.API_CALL_DELAY, backoff)
@@ -106,34 +87,43 @@ def classify_text(prompt: str, title: str) -> str | None:
             else:
                 time.sleep(config.API_CALL_DELAY)
 
-            # Send request using Groq SDK
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {"role": "user", "content": full_prompt},
-                ],
-                model=config.GROQ_MODEL,
-                temperature=0.1,  # Low temperature for consistent classification
-                max_tokens=10,    # We only need one word (the category)
+            # Send request to Ollama REST API
+            response = httpx.post(
+                OLLAMA_URL,
+                json={
+                    "model": config.OLLAMA_MODEL,
+                    "messages": [
+                        {"role": "user", "content": full_prompt},
+                    ],
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.1,
+                        "num_predict": 10,
+                    },
+                },
+                timeout=60.0,  # First call may need model load time
             )
+            response.raise_for_status()
 
-            response_text = chat_completion.choices[0].message.content
-            if response_text is None:
-                logger.warning("Got empty response from LLM")
+            result = response.json()
+            content = result.get("message", {}).get("content", "")
+
+            if not content:
+                logger.warning(f"Empty response from Ollama for title: '{title}'")
                 return None
-            return _parse_response(response_text)
 
-        except APIError as e:
+            return _parse_response(content)
+
+        except httpx.ConnectError as e:
             last_error = e
-            logger.error(f"API error on attempt {attempt}: {e}")
-            status_code = getattr(e, 'status_code', None)
+            logger.error(f"Connection error on attempt {attempt}: {e}")
+            if attempt < config.API_MAX_RETRIES:
+                time.sleep(config.API_CALL_DELAY * 2)
+            continue
 
-            # Rate limit errors (429) — wait longer and retry
-            if status_code == 429:
-                continue
-            # Server errors — retry
-            if status_code and 500 <= status_code < 600:
-                continue
-            # Other errors — fail immediately
+        except httpx.HTTPStatusError as e:
+            last_error = e
+            logger.error(f"HTTP error on attempt {attempt}: {e}")
             break
 
         except Exception as e:

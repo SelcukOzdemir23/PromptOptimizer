@@ -2,10 +2,9 @@
 EvoPrompt Optimizer - API Health Check & Connection Test
 
 Run this script to verify that:
-1. The Groq API key is configured
-2. The groq SDK can authenticate
-3. The target model is accessible
-4. A basic text generation call succeeds
+1. Ollama is running and accessible
+2. The target model is installed and accessible
+3. A basic text generation call succeeds
 
 Usage:
     source venv/bin/activate
@@ -15,13 +14,14 @@ Usage:
 import sys
 import time
 from pathlib import Path
+import httpx
 
 # Add src/ to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from groq import Groq
-from groq import APIError
 import config
+
+OLLAMA_URL = "http://localhost:11434"
 
 
 def print_section(title: str) -> None:
@@ -31,109 +31,84 @@ def print_section(title: str) -> None:
     print(f"{'─' * 60}")
 
 
-def check_api_key() -> bool:
-    """Verify that an API key is configured."""
-    print_section("1. API Key Check")
-
-    if not config.GROQ_API_KEY or config.GROQ_API_KEY == "your_api_key_here":
-        print("❌ FAIL: GROQ_API_KEY is not set.")
-        print("   → Get your free API key from:")
-        print("     https://console.groq.com/keys")
-        return False
-
-    masked = config.GROQ_API_KEY[:4] + "..." + config.GROQ_API_KEY[-4:]
-    print(f"✅ PASS: API key is set ({masked})")
-    return True
-
-
-def check_sdk_import() -> bool:
-    """Verify that the groq SDK can be imported."""
-    print_section("2. SDK Import Check")
+def check_ollama_running() -> bool:
+    """Verify that Ollama is running."""
+    print_section("1. Ollama Server Check")
 
     try:
-        from groq import Groq
-        import groq
-        version = getattr(groq, '__version__', 'unknown')
-        print(f"✅ PASS: groq SDK imported (version: {version})")
+        response = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=5.0)
+        response.raise_for_status()
+        print("✅ PASS: Ollama is running and accessible")
         return True
-    except ImportError as e:
-        print(f"❌ FAIL: Cannot import groq SDK: {e}")
-        return False
-
-
-def check_model_availability() -> bool:
-    """Verify that the configured model is accessible."""
-    print_section("3. Model Availability Check")
-
-    client = Groq(api_key=config.GROQ_API_KEY)
-    print(f"   Target model: {config.GROQ_MODEL}")
-
-    try:
-        # Groq doesn't have a models.list() in free tier, so we test
-        # with a minimal request instead
-        response = client.chat.completions.create(
-            messages=[{"role": "user", "content": "Hi"}],
-            model=config.GROQ_MODEL,
-            max_tokens=5,
-        )
-        message = response.choices[0].message
-        text = message.content if message.content else "(empty)"
-        print(f"✅ PASS: {config.GROQ_MODEL} responded: '{text[:50]}'")
-        return True
-
-    except APIError as e:
-        print(f"❌ FAIL: API error: {e}")
-        status_code = getattr(e, 'status_code', None)  # type: ignore[arg-type]
-        if status_code == 401:
-            print("   → Invalid API key. Check your GROQ_API_KEY.")
-        elif status_code == 429:
-            print("   → Rate limit exceeded. Wait and try again.")
+    except httpx.ConnectError:
+        print("❌ FAIL: Cannot connect to Ollama at localhost:11434")
+        print("   → Start Ollama: ollama serve")
         return False
     except Exception as e:
         print(f"❌ FAIL: Unexpected error: {e}")
+        return False
+
+
+def check_model_available() -> bool:
+    """Verify that the configured model is available."""
+    print_section("2. Model Availability Check")
+
+    print(f"   Target model: {config.OLLAMA_MODEL}")
+
+    try:
+        response = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=5.0)
+        models = response.json().get("models", [])
+        model_names = [m["name"] for m in models]
+
+        if config.OLLAMA_MODEL in model_names:
+            print(f"✅ PASS: {config.OLLAMA_MODEL} is installed")
+            return True
+        else:
+            print(f"❌ FAIL: {config.OLLAMA_MODEL} not found")
+            print(f"   Available models: {model_names}")
+            print(f"   → Install: ollama pull {config.OLLAMA_MODEL}")
+            return False
+
+    except Exception as e:
+        print(f"❌ FAIL: {e}")
         return False
 
 
 def check_text_generation() -> bool:
     """Test a minimal text generation call."""
-    print_section("4. Text Generation Test")
+    print_section("3. Text Generation Test")
 
-    client = Groq(api_key=config.GROQ_API_KEY)
     prompt = "Reply with exactly one word: YES"
-
     print(f"   Sending: '{prompt}'")
-    print(f"   Model: {config.GROQ_MODEL}")
+    print(f"   Model: {config.OLLAMA_MODEL}")
 
     try:
         start = time.time()
-        response = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model=config.GROQ_MODEL,
-            max_tokens=10,
-            temperature=0.1,
+        response = httpx.post(
+            f"{OLLAMA_URL}/api/chat",
+            json={
+                "model": config.OLLAMA_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "options": {"temperature": 0.1, "num_predict": 10},
+            },
+            timeout=120.0,  # First call may need model load
         )
         elapsed = time.time() - start
 
-        message = response.choices[0].message
-        text = message.content.strip() if message.content else "(empty)"
+        text = response.json().get("message", {}).get("content", "").strip()
         print(f"✅ PASS: Response received in {elapsed:.2f}s")
         print(f"   Response: '{text[:100]}'")
         return True
 
-    except APIError as e:
-        status_code = getattr(e, 'status_code', None)  # type: ignore[arg-type]
-        print(f"❌ FAIL: API error: {e}")
-        if status_code == 429:
-            print("   → Rate limit exceeded.")
-        return False
     except Exception as e:
-        print(f"❌ FAIL: Unexpected error: {e}")
+        print(f"❌ FAIL: {e}")
         return False
 
 
 def check_classification_prompt() -> bool:
-    """Test a news classification prompt (mini test)."""
-    print_section("5. Classification Prompt Test")
+    """Test a news classification prompt."""
+    print_section("4. Classification Prompt Test")
 
     sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
     import llm_interface
@@ -147,7 +122,6 @@ def check_classification_prompt() -> bool:
         "Category:"
     )
 
-    # Test with a clear sports headline
     title = "Lakers Defeat Celtics in Overtime Thriller"
     expected = "Sports"
 
@@ -160,7 +134,7 @@ def check_classification_prompt() -> bool:
         print(f"✅ PASS: Correctly classified as '{result}'")
         return True
     elif result is None:
-        print(f"❌ FAIL: Could not get a response (API error)")
+        print(f"❌ FAIL: Could not get a response")
         return False
     else:
         print(f"⚠️  UNEXPECTED: Got '{result}' instead of '{expected}'")
@@ -170,13 +144,12 @@ def check_classification_prompt() -> bool:
 def main() -> None:
     """Run all health checks."""
     print("=" * 60)
-    print("  EvoPrompt Optimizer — Groq API Health Check")
+    print("  EvoPrompt Optimizer — Ollama Health Check")
     print("=" * 60)
 
     results = {
-        "API Key": check_api_key(),
-        "SDK Import": check_sdk_import(),
-        "Model Available": check_model_availability(),
+        "Ollama Running": check_ollama_running(),
+        "Model Available": check_model_available(),
         "Text Generation": check_text_generation(),
         "Classification": check_classification_prompt(),
     }
@@ -191,15 +164,14 @@ def main() -> None:
 
     print()
     if all_pass:
-        print("🎉 All checks passed! Groq API is ready for evolution.")
+        print("🎉 All checks passed! Ollama is ready for evolution.")
         print("   Run: python src/main.py")
     else:
-        print("⚠️  Some checks failed. Fix the issues before running evolution.")
+        print("⚠️  Some checks failed.")
         print()
         print("   Common fixes:")
-        print("   - Get API key from: https://console.groq.com/keys")
-        print("   - Add to .env: GROQ_API_KEY=gsk_...")
-        print("   - Check model name in .env")
+        print("   - Start Ollama: ollama serve")
+        print("   - Install model: ollama pull llama3.1:8b")
 
     print("=" * 60)
 
