@@ -22,7 +22,7 @@ Uygulama, iki iş günü içinde tamamlanabilecek şekilde kurgulanmıştır. Ku
 
 Proje, 2025 ve 2026 yıllarında yaygın olarak benimsenen araçlar ve kütüphaneler üzerine inşa edilecektir.
 
-- **Google Gemini Flash 2.0 (API):** Yüksek hız, düşük maliyet ve ücretsiz kotası sayesinde eğitim sürecinin kısa sürede tamamlanmasına olanak tanımaktadır. Alternatif olarak OpenAI GPT-4o-mini de kullanılabilir.
+- **Ollama (llama3.1:8b):** Yerel çalışan, API anahtarı gerektirmeyen, hızlı ve sınırsız inference. Kota sorunu yoktur.
 - **DEAP Kütüphanesi:** Genetik algoritma işlemlerinin standart bir çerçeve içinde yürütülmesini sağlayan, akademik çalışmalarda sıklıkla tercih edilen bir Python paketidir.
 - **NLTK WordNet:** Mutasyon aşamasında anlam bütünlüğünü korumak amacıyla eş anlamlı sözcük değişimleri için kullanılacaktır.
 - **Matplotlib ve Pandas:** Evrim sürecinin görselleştirilmesi ve sayısal çıktıların düzenlenmesinde görev alacaktır.
@@ -107,13 +107,10 @@ Projenin teorik dayanağı olarak, 2025 ve 2026 yıllarında yayımlanmış olan
 
 ## 7. Risk Değerlendirmesi ve Önlemler
 
-**Risk:** API çağrı sıklığı nedeniyle kota aşımı veya geçici hizmet kesintisi yaşanması.  
-**Önlem:** Her API çağrısı arasına zorunlu bekleme süresi eklenecek ve hata durumunda yeniden deneme mekanizması devreye sokulacaktır.
+**Risk:** LLM'nin beklenmeyen veya sınıflar dışında yanıtlar üretmesi (örn. "Politics", "Entertainment").
+**Önlem:** Yanıt işleme katmanı, yalnızca geçerli sınıf isimlerini kabul edecek, eşleşmeyen yanıtlar `None` olarak işaretlenecektir.
 
-**Risk:** Mutasyon işlemlerinin komut metnini anlamsız hale getirmesi.  
-**Önlem:** Mutasyon işlemi yalnızca WordNet eş anlamlıları ile sınırlandırılacak, rastgele karakter ekleme veya silme işlemlerine izin verilmeyecektir.
-
-**Risk:** Evrim sürecinin eğitim verisine aşırı uyum sağlaması (overfitting).  
+**Risk:** Evrim sürecinin eğitim verisine aşırı uyum sağlaması (overfitting).
 **Önlem:** Nihai başarı ölçümü, evrim sürecinde hiç kullanılmamış, bağımsız bir test kümesi üzerinden yapılacak ve raporda her iki doğruluk değeri ayrı ayrı raporlanacaktır.
 
 ---
