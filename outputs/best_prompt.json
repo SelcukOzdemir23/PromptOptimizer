@@ -1,0 +1,14 @@
+{
+  "prompt": "You are a news program classification Classify the following Holy Scripture headline into one of these these four categories: World, Sports, Business, Sci/Tech. Respond with ONLY the category name, nothing else. Headline: {title} Category:",
+  "accuracy": 0.9,
+  "model": "llama3.1:8b",
+  "timestamp": "2026-04-08T23:10:44",
+  "config": {
+    "population_size": 10,
+    "generations": 5,
+    "mutation_probability": 0.2,
+    "crossover_probability": 0.8,
+    "mini_batch_size": 20,
+    "tournament_size": 3
+  }
+}

@@ -45,7 +45,7 @@ Modele girdi olarak yalnızca haber başlığı sütunu iletilecek, açıklama s
 Sistemin geliştirilmesinde aşağıdaki teknolojilerin kullanılması zorunludur. Tüm bileşenler 2025 ve 2026 yıllarında yaygın olarak benimsenen güncel sürümlerden seçilmelidir.
 
 - **Programlama Dili:** Python 3.10 veya üzeri bir sürüm.
-- **Büyük Dil Modeli API'si:** Google Gemini Flash 2.0. Resmî Python SDK (`google-generativeai`) aracılığıyla erişim sağlanacaktır. API kota aşımı ve geçici hatalara karşı üstel geri çekilme mekanizması uygulanacaktır.
+- **Büyük Dil Modeli:** Ollama ile yerel çalışan modeller (llama3.1:8b). API anahtarı gerekmez, Ollama `http://localhost:11434` üzerinde REST API sunar.
 - **Genetik Algoritma Çerçevesi:** DEAP (Distributed Evolutionary Algorithms in Python) kütüphanesi. Evrimsel operatörlerin standart ve güvenilir biçimde yürütülmesini sağlayacaktır.
 - **Doğal Dil İşleme Yardımcısı:** NLTK WordNet. Mutasyon aşamasında anlam bütünlüğünü korumak amacıyla eş anlamlı sözcük değişimleri için kullanılacaktır.
 - **Veri İşleme ve Görselleştirme:** Pandas (veri manipülasyonu), Matplotlib (grafik çizimi).
@@ -62,7 +62,7 @@ Ham veri kümesinin okunması, işlenmesi ve sistemin diğer bileşenlerine sunu
 
 ### 5.2. Büyük Dil Modeli Arayüz Modülü
 
-Sistemin geri kalanı ile Google Gemini API arasındaki tüm iletişimi soyutlayan katmandır. Verilen bir komut ve metin için modelden tahmin talep edecek, dönen yanıtı temizleyerek sayısal sınıf etiketine dönüştürecek ve ağ hataları ya da kota aşımları karşısında yeniden deneme stratejilerini yürütecektir.
+Sistemin geri kalanı ile yerel Ollama servisi (`http://localhost:11434`) arasındaki tüm iletişimi soyutlayan katmandır. Verilen bir komut ve metin için modelden tahmin talep edecek, dönen yanıtı temizleyerek sınıf etiketine dönüştürecek ve bağlantı hataları karşısında yeniden deneme stratejilerini yürütecektir.
 
 ### 5.3. Evrimsel Algoritma Motoru
 
@@ -95,8 +95,8 @@ Proje kök dizini altında `data` klasörü bulunacak, bu klasörün altında `r
 Geliştirilen kodun aşağıdaki standartlara uygun olması zorunludur.
 
 - Her fonksiyonun başında, fonksiyonun ne iş yaptığını, hangi parametreleri aldığını ve ne döndürdüğünü açıklayan belgelendirme metni bulunmalıdır.
-- API anahtarı, popülasyon büyüklüğü ve jenerasyon sayısı gibi değerler yapılandırma dosyasından okunmalı, kaynak kod içerisine sabit olarak yazılmamalıdır.
-- API çağrıları sırasında oluşabilecek hatalar yakalanmalı ve kullanıcıya anlamlı bilgi mesajları iletilmelidir. Sistem, geçici hatalar karşısında belirli bir bekleme süresinin ardından işlemi yeniden denemelidir.
+- Model adı ve evrim parametreleri yapılandırma dosyasından okunmalı, kaynak kod içerisine sabit olarak yazılmamalıdır.
+- LLM çağrıları sırasında oluşabilecek bağlantı hataları yakalanmalı ve sistem belirli bir bekleme süresinin ardından işlemi yeniden denemelidir.
 - Çalışma süresince konsola düzenli aralıklarla ilerleme durumu hakkında bilgi verilmelidir.
 
 
@@ -104,7 +104,7 @@ Geliştirilen kodun aşağıdaki standartlara uygun olması zorunludur.
 
 Sistemin ilk çalıştırmada aşağıdaki parametrelerle test edilmesi önerilmektedir. Bu değerler yapılandırma dosyası üzerinden değiştirilebilir olmalıdır.
 
-Popülasyon büyüklüğü yirmi, jenerasyon sayısı on, mutasyon olasılığı yüzde yirmi, çaprazlama olasılığı yüzde seksen olarak belirlenmiştir. Mini-batch değerlendirmesinde her birey için rastgele seçilecek örnek sayısı elli ile sınırlandırılacaktır. API kota yönetimi kapsamında her çağrı arasına dört saniyelik zorunlu bekleme süresi eklenecektir.
+Popülasyon büyüklüğü on, jenerasyon sayısı beş, mutasyon olasılığı yüzde yirmi, çaprazlama olasılığı yüzde seksen olarak belirlenmiştir. Mini-batch değerlendirmesinde her birey için rastgele seçilecek örnek sayısı yirmi ile sınırlandırılacaktır. Her LLM çağrısı arasına yarım saniyelik zorunlu bekleme süresi eklenecektir.
 
 
 ## 9. Teslimat Kapsamı ve Beklentiler

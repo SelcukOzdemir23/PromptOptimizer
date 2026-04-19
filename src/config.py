@@ -41,13 +41,19 @@ TEST_CSV_PATH = BASE_DIR / "dataset" / "test.csv"
 TEST_SPLIT_RATIO = float(os.getenv("TEST_SPLIT_RATIO", "0.5"))
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
 
-# ─── LLM / Gemini Configuration ──────────────────────────────────────────────
+# Test evaluation sample size (limits API calls for final evaluation)
+# Set to -1 to use the full test set (expensive!)
+TEST_SAMPLE_SIZE = int(os.getenv("TEST_SAMPLE_SIZE", "50"))
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
+# ─── LLM / Ollama Configuration ──────────────────────────────────────────────
+
+# Uses local Ollama instance (http://localhost:11434)
+# No API key needed — runs entirely on your machine.
+# Model must be installed: `ollama pull llama3.1:8b`
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 
 # Rate limiting & retry
-API_CALL_DELAY = float(os.getenv("API_CALL_DELAY", "4.0"))
+API_CALL_DELAY = float(os.getenv("API_CALL_DELAY", "1.0"))
 API_MAX_RETRIES = int(os.getenv("API_MAX_RETRIES", "3"))
 API_BACKOFF_FACTOR = float(os.getenv("API_BACKOFF_FACTOR", "2.0"))
 
@@ -80,11 +86,7 @@ def validate_config() -> None:
     Validate that all required configuration values are present and valid.
     Raises ValueError if any critical configuration is missing or invalid.
     """
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "your_api_key_here":
-        raise ValueError(
-            "GEMINI_API_KEY is not set. "
-            "Please copy .env.example to .env and add your API key."
-        )
+    # No API key needed for Ollama (local inference)
 
     if POPULATION_SIZE < 2:
         raise ValueError("POPULATION_SIZE must be at least 2.")

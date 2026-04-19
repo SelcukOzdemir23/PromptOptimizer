@@ -1,8 +1,9 @@
 # EvoPrompt Optimizer - Dependencies
 # Computational Intelligence Midterm Project - HZ-2026-001
 
-# Google Gemini API
-google-generativeai>=0.8.0
+# LLM Inference — Ollama (local, no API key needed)
+# Ollama must be installed: https://ollama.ai
+# httpx is used for REST API calls (already included with other deps)
 
 # Evolutionary Algorithms
 deap>=1.4.1
@@ -12,7 +13,11 @@ nltk>=3.9.1
 
 # Data Processing & Visualization
 pandas>=2.2.0
+scikit-learn>=1.6.0
 matplotlib>=3.9.0
 
 # Environment & Configuration
 python-dotenv>=1.0.1
+
+# Testing
+pytest>=8.0.0
